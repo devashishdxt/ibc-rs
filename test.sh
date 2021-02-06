@@ -9,7 +9,7 @@ source test_env.sh
 0_to_1() {
   local amount=$1
   local denom="samoleans"
-  hermes tx raw packet-send ibc-0 ibc-1 transfer channel-0 $amount $TIMEOUT -n 1 -d $denom
+  hermes tx raw ft-transfer ibc-0 ibc-1 transfer channel-0 $amount $TIMEOUT -n 1 -d $denom
   hermes tx raw packet-recv ibc-1 ibc-0 transfer channel-0
   hermes tx raw packet-ack ibc-0 ibc-1 transfer channel-0
 
@@ -24,7 +24,7 @@ source test_env.sh
 1_to_2() {
   local amount=$1
   local denom="ibc/27A6394C3F9FF9C9DCF5DFFADF9BB5FE9A37C7E92B006199894CF1824DF9AC7C"
-  hermes tx raw packet-send ibc-1 ibc-2 transfer channel-1 $amount $TIMEOUT -n 1 -d $denom
+  hermes tx raw ft-transfer ibc-1 ibc-2 transfer channel-1 $amount $TIMEOUT -n 1 -d $denom
   hermes tx raw packet-recv ibc-2 ibc-1 transfer channel-1
   hermes tx raw packet-ack ibc-1 ibc-2 transfer channel-0
 
@@ -39,7 +39,7 @@ source test_env.sh
 2_to_1() {
   local amount=$1
   local denom="ibc/F47F0D7C9B4F7D971DF647A75A80CB8D905D3230262FEF2996340664D3A12D48"
-  hermes tx raw packet-send ibc-2 ibc-1 transfer channel-0 $amount $TIMEOUT -n 1 -d $denom
+  hermes tx raw ft-transfer ibc-2 ibc-1 transfer channel-0 $amount $TIMEOUT -n 1 -d $denom
   hermes tx raw packet-recv ibc-1 ibc-2 transfer channel-0
   hermes tx raw packet-ack ibc-2 ibc-1 transfer channel-1
   # I used to get the following error:
@@ -96,7 +96,7 @@ source test_env.sh
 1_to_0() {
   local amount=$1
   local denom="ibc/27A6394C3F9FF9C9DCF5DFFADF9BB5FE9A37C7E92B006199894CF1824DF9AC7C"
-  hermes tx raw packet-send ibc-1 ibc-0 transfer channel-0 $amount $TIMEOUT -n 1 -d $denom
+  hermes tx raw ft-transfer ibc-1 ibc-0 transfer channel-0 $amount $TIMEOUT -n 1 -d $denom
   hermes tx raw packet-recv ibc-0 ibc-1 transfer channel-0
   hermes tx raw packet-ack ibc-1 ibc-0 transfer channel-0
 
