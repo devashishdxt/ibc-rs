@@ -11,6 +11,7 @@
 
 - [ibc-relayer]
   - Listen to channel close initialization event and perform the close handshake ([#560])
+  - Connection handshake CLI ([#630])
 
 - [ibc-relayer-cli]
   - [nothing yet]
