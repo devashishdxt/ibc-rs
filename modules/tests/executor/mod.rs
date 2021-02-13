@@ -25,7 +25,8 @@ use ibc::mock::header::MockHeader;
 use ibc::mock::host::HostType;
 use ibc::proofs::{ConsensusProof, Proofs};
 use ibc::Height;
-use std::collections::{BTreeMap, HashMap};
+use stateright::util::HashableHashMap;
+use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
 use step::{Action, ActionOutcome, Chain, Step};
@@ -34,7 +35,7 @@ use tendermint::account::Id as AccountId;
 #[derive(Debug, Clone, Hash)]
 pub struct IBCTestExecutor {
     // mapping from chain identifier to its context
-    contexts: BTreeMap<ChainId, MockContext>,
+    contexts: HashableHashMap<ChainId, MockContext>,
 }
 
 impl IBCTestExecutor {

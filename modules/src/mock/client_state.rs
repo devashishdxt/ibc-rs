@@ -1,7 +1,7 @@
-use std::collections::BTreeMap;
 use std::convert::{TryFrom, TryInto};
 
 use serde::Serialize;
+use stateright::util::HashableHashMap;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::mock::ClientState as RawMockClientState;
@@ -27,7 +27,7 @@ pub struct MockClientRecord {
     pub client_state: Option<AnyClientState>,
 
     /// Mapping of heights to consensus states for this client.
-    pub consensus_states: BTreeMap<Height, AnyConsensusState>,
+    pub consensus_states: HashableHashMap<Height, AnyConsensusState>,
 }
 
 /// A mock of a client state. For an example of a real structure that this mocks, you can see

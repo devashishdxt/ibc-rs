@@ -1,11 +1,11 @@
 //! Implementation of a global context mock. Used in testing handlers of all IBC modules.
 
 use std::cmp::min;
-use std::collections::BTreeMap;
 use std::error::Error;
 use std::str::FromStr;
 
 use prost_types::Any;
+use stateright::util::HashableHashMap;
 use tendermint::account::Id;
 
 use crate::ics02_client::client_def::{AnyClientState, AnyConsensusState, AnyHeader};
@@ -70,35 +70,35 @@ pub struct MockContext {
     history: Vec<HostBlock>,
 
     /// The set of all clients, indexed by their id.
-    clients: BTreeMap<ClientId, MockClientRecord>,
+    clients: HashableHashMap<ClientId, MockClientRecord>,
 
     /// Counter for the client identifiers, necessary for `increase_client_counter` and the
     /// `client_counter` methods.
     client_ids_counter: u64,
 
     /// Association between client ids and connection ids.
-    client_connections: BTreeMap<ClientId, ConnectionId>,
+    client_connections: HashableHashMap<ClientId, ConnectionId>,
 
     /// All the connections in the store.
-    connections: BTreeMap<ConnectionId, ConnectionEnd>,
+    connections: HashableHashMap<ConnectionId, ConnectionEnd>,
 
     /// All the channels in the store. TODO Make new key PortId X ChanneId
-    channels: BTreeMap<(PortId, ChannelId), ChannelEnd>,
+    channels: HashableHashMap<(PortId, ChannelId), ChannelEnd>,
 
     /// Association between conection ids and channel ids.
-    connection_channels: BTreeMap<ConnectionId, Vec<(PortId, ChannelId)>>,
+    connection_channels: HashableHashMap<ConnectionId, Vec<(PortId, ChannelId)>>,
 
     /// Tracks the sequence number for the next packet to be sent.
-    next_sequence_send: BTreeMap<(PortId, ChannelId), u64>,
+    next_sequence_send: HashableHashMap<(PortId, ChannelId), u64>,
 
     /// Tracks the sequence number for the next packet to be received.
-    next_sequence_recv: BTreeMap<(PortId, ChannelId), u64>,
+    next_sequence_recv: HashableHashMap<(PortId, ChannelId), u64>,
 
     /// Tracks the sequence number for the next packet to be acknowledged.
-    next_sequence_ack: BTreeMap<(PortId, ChannelId), u64>,
+    next_sequence_ack: HashableHashMap<(PortId, ChannelId), u64>,
 
     /// Maps ports to their capabilities
-    port_capabilities: BTreeMap<PortId, Capability>,
+    port_capabilities: HashableHashMap<PortId, Capability>,
 
     /// Counter for connection identifiers (see `next_connection_id`).
     connection_ids_counter: u64,
