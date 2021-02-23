@@ -9,6 +9,8 @@ use super::error;
 pub enum ClientType {
     Tendermint = 1,
 
+    SoloMachine = 2,
+
     #[cfg(any(test, feature = "mocks"))]
     Mock = 9999,
 }
@@ -18,6 +20,7 @@ impl ClientType {
     pub fn as_string(&self) -> &'static str {
         match self {
             Self::Tendermint => "07-tendermint",
+            Self::SoloMachine => "06-solo-machine",
 
             #[cfg(any(test, feature = "mocks"))]
             Self::Mock => "9999-mock",
@@ -37,6 +40,7 @@ impl std::str::FromStr for ClientType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "07-tendermint" => Ok(Self::Tendermint),
+            "06-solo-machine" => Ok(Self::SoloMachine),
 
             #[cfg(any(test, feature = "mocks"))]
             "mock" => Ok(Self::Mock),
@@ -58,6 +62,16 @@ mod tests {
 
         match client_type {
             Ok(ClientType::Tendermint) => (),
+            _ => panic!("parse failed"),
+        }
+    }
+
+    #[test]
+    fn parse_solo_machine_client_type() {
+        let client_type = ClientType::from_str("06-solo-machine");
+
+        match client_type {
+            Ok(ClientType::SoloMachine) => (),
             _ => panic!("parse failed"),
         }
     }

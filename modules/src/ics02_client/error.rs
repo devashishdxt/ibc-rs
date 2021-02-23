@@ -74,6 +74,12 @@ pub enum Kind {
         state_type: ClientType,
         consensus_type: ClientType,
     },
+
+    #[error("unknown pub key type: {0}")]
+    UnknownPubKeyType(String),
+
+    #[error("invalid raw pub key")]
+    InvalidRawPubKey,
 }
 
 impl Kind {
