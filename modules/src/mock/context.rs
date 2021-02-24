@@ -219,6 +219,8 @@ impl MockContext {
                 // Return the tuple.
                 (Some(client_state), consensus_state)
             }
+            // If it's a Solo Machine client, we need solo machine states.
+            ClientType::SoloMachine => todo!("@devashishdxt"),
         };
         let consensus_states = vec![(cs_height, consensus_state)].into_iter().collect();
 
