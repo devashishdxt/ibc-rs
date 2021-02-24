@@ -9,7 +9,7 @@ use crate::{
         client_def::AnyConsensusState, client_type::ClientType, crypto::AnyPublicKey,
         state::ConsensusState as IConsensusState,
     },
-    ics07_tendermint::error::{Error, Kind},
+    ics06_solo_machine::error::{Error, Kind},
     ics23_commitment::commitment::CommitmentRoot,
 };
 

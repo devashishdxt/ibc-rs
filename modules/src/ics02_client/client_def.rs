@@ -13,6 +13,7 @@ use crate::ics02_client::state::{ClientState, ConsensusState};
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics04_channel::channel::ChannelEnd;
 use crate::ics06_solo_machine::{
+    client_state::ClientState as SoloMachineClientState,
     consensus_state::ConsensusState as SoloMachineConsensusState,
     header::Header as SoloMachineHeader,
 };
@@ -21,7 +22,7 @@ use crate::ics07_tendermint::client_state::ClientState as TendermintClientState;
 use crate::ics07_tendermint::consensus_state::ConsensusState as TendermintConsensusState;
 use crate::ics07_tendermint::header::Header as TendermintHeader;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot};
-use crate::ics24_host::identifier::{ChainId, ChannelId, ClientId, ConnectionId, PortId};
+use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
 use crate::Height;
 
 #[cfg(any(test, feature = "mocks"))]
@@ -36,6 +37,7 @@ pub const TENDERMINT_CONSENSUS_STATE_TYPE_URL: &str =
     "/ibc.lightclients.tendermint.v1.ConsensusState";
 pub const TENDERMINT_HEADER_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.Header";
 
+pub const SOLO_MACHINE_CLIENT_STATE_TYPE_URL: &str = "/ibc.lightclients.solomachine.v1.ClientState";
 pub const SOLO_MACHINE_CONSENSUS_STATE_TYPE_URL: &str =
     "/ibc.lightclients.solomachine.v1.ConsensusState";
 pub const SOLO_MACHINE_HEADER_TYPE_URL: &str = "/ibc.lightclients.solomachine.v1.Header";
@@ -209,6 +211,8 @@ impl From<AnyHeader> for Any {
 pub enum AnyClientState {
     Tendermint(TendermintClientState),
 
+    SoloMachine(SoloMachineClientState),
+
     #[cfg(any(test, feature = "mocks"))]
     Mock(MockClientState),
 }
@@ -218,6 +222,8 @@ impl AnyClientState {
         match self {
             Self::Tendermint(tm_state) => tm_state.latest_height(),
 
+            Self::SoloMachine(sm_state) => sm_state.latest_height(),
+
             #[cfg(any(test, feature = "mocks"))]
             Self::Mock(mock_state) => mock_state.latest_height(),
         }
@@ -225,6 +231,8 @@ impl AnyClientState {
     pub fn client_type(&self) -> ClientType {
         match self {
             Self::Tendermint(state) => state.client_type(),
+
+            Self::SoloMachine(state) => state.client_type(),
 
             #[cfg(any(test, feature = "mocks"))]
             Self::Mock(state) => state.client_type(),
@@ -264,6 +272,10 @@ impl From<AnyClientState> for Any {
                 type_url: TENDERMINT_CLIENT_STATE_TYPE_URL.to_string(),
                 value: value.encode_vec().unwrap(),
             },
+            AnyClientState::SoloMachine(value) => Any {
+                type_url: SOLO_MACHINE_CLIENT_STATE_TYPE_URL.to_string(),
+                value: value.encode_vec().unwrap(),
+            },
             #[cfg(any(test, feature = "mocks"))]
             AnyClientState::Mock(value) => Any {
                 type_url: MOCK_CLIENT_STATE_TYPE_URL.to_string(),
@@ -274,15 +286,6 @@ impl From<AnyClientState> for Any {
 }
 
 impl ClientState for AnyClientState {
-    fn chain_id(&self) -> ChainId {
-        match self {
-            AnyClientState::Tendermint(tm_state) => tm_state.chain_id(),
-
-            #[cfg(any(test, feature = "mocks"))]
-            AnyClientState::Mock(mock_state) => mock_state.chain_id(),
-        }
-    }
-
     fn client_type(&self) -> ClientType {
         self.client_type()
     }
@@ -294,6 +297,8 @@ impl ClientState for AnyClientState {
     fn is_frozen(&self) -> bool {
         match self {
             AnyClientState::Tendermint(tm_state) => tm_state.is_frozen(),
+
+            AnyClientState::SoloMachine(sm_state) => sm_state.is_frozen(),
 
             #[cfg(any(test, feature = "mocks"))]
             AnyClientState::Mock(mock_state) => mock_state.is_frozen(),
@@ -325,6 +330,8 @@ impl AnyConsensusState {
                 u64::try_from(value)
                     .map_err(|_| Kind::NegativeConsensusStateTimestamp(value.to_string()))
             }
+
+            Self::SoloMachine(sm_state) => Ok(sm_state.timestamp),
 
             #[cfg(any(test, feature = "mocks"))]
             Self::Mock(mock_state) => Ok(mock_state.timestamp()),

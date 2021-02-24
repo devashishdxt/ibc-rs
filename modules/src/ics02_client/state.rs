@@ -1,5 +1,4 @@
 use crate::ics23_commitment::commitment::CommitmentRoot;
-use crate::ics24_host::identifier::ChainId;
 use crate::Height;
 
 use super::{
@@ -24,10 +23,6 @@ pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
 
 #[dyn_clonable::clonable]
 pub trait ClientState: Clone + std::fmt::Debug + Send + Sync {
-    /// Return the chain identifier which this client is serving (i.e., the client is verifying
-    /// consensus states from this chain).
-    fn chain_id(&self) -> ChainId;
-
     /// Type of client associated with this state (eg. Tendermint)
     fn client_type(&self) -> ClientType;
 
