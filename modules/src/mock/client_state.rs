@@ -144,7 +144,7 @@ impl ConsensusState for MockConsensusState {
         ClientType::Mock
     }
 
-    fn root(&self) -> &CommitmentRoot {
+    fn root(&self) -> Option<&CommitmentRoot> {
         todo!()
     }
 
