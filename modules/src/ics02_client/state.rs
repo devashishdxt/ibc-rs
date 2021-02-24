@@ -13,7 +13,7 @@ pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
     fn client_type(&self) -> ClientType;
 
     /// Commitment root of the consensus state, which is used for key-value pair verification.
-    fn root(&self) -> &CommitmentRoot;
+    fn root(&self) -> Option<&CommitmentRoot>;
 
     /// Performs basic validation of the consensus state
     fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>>;

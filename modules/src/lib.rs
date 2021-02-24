@@ -16,6 +16,7 @@
 //! - ICS 03: Connection
 //! - ICS 04: Channel
 //! - ICS 05: Port
+//! - ICS 06: Solo Machine Client
 //! - ICS 07: Tendermint Client
 //! - ICS 18: Basic relayer functions
 //! - ICS 23: Vector Commitment Scheme
@@ -31,6 +32,7 @@ pub mod ics02_client;
 pub mod ics03_connection;
 pub mod ics04_channel;
 pub mod ics05_port;
+pub mod ics06_solo_machine;
 pub mod ics07_tendermint;
 pub mod ics18_relayer;
 pub mod ics23_commitment;

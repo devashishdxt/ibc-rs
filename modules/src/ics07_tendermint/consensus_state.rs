@@ -34,8 +34,8 @@ impl crate::ics02_client::state::ConsensusState for ConsensusState {
         ClientType::Tendermint
     }
 
-    fn root(&self) -> &CommitmentRoot {
-        &self.root
+    fn root(&self) -> Option<&CommitmentRoot> {
+        Some(&self.root)
     }
 
     fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {

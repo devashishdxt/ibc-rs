@@ -158,6 +158,8 @@ impl ClientId {
         match client_type {
             ClientType::Tendermint => ClientType::Tendermint.as_string(),
 
+            ClientType::SoloMachine => ClientType::SoloMachine.as_string(),
+
             #[cfg(any(test, feature = "mocks"))]
             ClientType::Mock => ClientType::Mock.as_string(),
         }

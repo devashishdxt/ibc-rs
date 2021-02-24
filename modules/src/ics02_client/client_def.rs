@@ -12,6 +12,7 @@ use crate::ics02_client::header::Header;
 use crate::ics02_client::state::{ClientState, ConsensusState};
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics04_channel::channel::ChannelEnd;
+use crate::ics06_solo_machine::consensus_state::ConsensusState as SoloMachineConsensusState;
 use crate::ics07_tendermint::client_def::TendermintClient;
 use crate::ics07_tendermint::client_state::ClientState as TendermintClientState;
 use crate::ics07_tendermint::consensus_state::ConsensusState as TendermintConsensusState;
@@ -31,6 +32,9 @@ pub const TENDERMINT_CLIENT_STATE_TYPE_URL: &str = "/ibc.lightclients.tendermint
 pub const TENDERMINT_CONSENSUS_STATE_TYPE_URL: &str =
     "/ibc.lightclients.tendermint.v1.ConsensusState";
 pub const TENDERMINT_HEADER_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.Header";
+
+pub const SOLO_MACHINE_CONSENSUS_STATE_TYPE_URL: &str =
+    "/ibc.lightclients.solomachine.v1.ConsensusState";
 
 pub const MOCK_CLIENT_STATE_TYPE_URL: &str = "/ibc.mock.ClientState";
 pub const MOCK_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.mock.ConsensusState";
@@ -97,7 +101,7 @@ pub trait ClientDef: Clone {
         &self,
         _client_state: &Self::ClientState,
         height: Height,
-        root: &CommitmentRoot,
+        root: Option<&CommitmentRoot>,
         prefix: &CommitmentPrefix,
         client_id: &ClientId,
         proof: &CommitmentProofBytes,
@@ -283,6 +287,8 @@ impl ClientState for AnyClientState {
 pub enum AnyConsensusState {
     Tendermint(TendermintConsensusState),
 
+    SoloMachine(SoloMachineConsensusState),
+
     #[cfg(any(test, feature = "mocks"))]
     Mock(MockConsensusState),
 }
@@ -305,6 +311,8 @@ impl AnyConsensusState {
     pub fn client_type(&self) -> ClientType {
         match self {
             AnyConsensusState::Tendermint(_cs) => ClientType::Tendermint,
+
+            AnyConsensusState::SoloMachine(_cs) => ClientType::SoloMachine,
 
             #[cfg(any(test, feature = "mocks"))]
             AnyConsensusState::Mock(_cs) => ClientType::Mock,
@@ -344,6 +352,10 @@ impl From<AnyConsensusState> for Any {
                 type_url: TENDERMINT_CONSENSUS_STATE_TYPE_URL.to_string(),
                 value: value.encode_vec().unwrap(),
             },
+            AnyConsensusState::SoloMachine(value) => Any {
+                type_url: SOLO_MACHINE_CONSENSUS_STATE_TYPE_URL.to_string(),
+                value: value.encode_vec().unwrap(),
+            },
             #[cfg(any(test, feature = "mocks"))]
             AnyConsensusState::Mock(value) => Any {
                 type_url: MOCK_CONSENSUS_STATE_TYPE_URL.to_string(),
@@ -358,7 +370,7 @@ impl ConsensusState for AnyConsensusState {
         self.client_type()
     }
 
-    fn root(&self) -> &CommitmentRoot {
+    fn root(&self) -> Option<&CommitmentRoot> {
         todo!()
     }
 
@@ -383,6 +395,8 @@ impl AnyClient {
     pub fn from_client_type(client_type: ClientType) -> AnyClient {
         match client_type {
             ClientType::Tendermint => Self::Tendermint(TendermintClient),
+
+            ClientType::SoloMachine => todo!(),
 
             #[cfg(any(test, feature = "mocks"))]
             ClientType::Mock => Self::Mock(MockClient),
@@ -575,7 +589,7 @@ impl ClientDef for AnyClient {
         &self,
         client_state: &Self::ClientState,
         height: Height,
-        root: &CommitmentRoot,
+        root: Option<&CommitmentRoot>,
         prefix: &CommitmentPrefix,
         client_id: &ClientId,
         proof: &CommitmentProofBytes,

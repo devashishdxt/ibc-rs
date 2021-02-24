@@ -80,7 +80,7 @@ impl ClientDef for TendermintClient {
         &self,
         _client_state: &Self::ClientState,
         _height: Height,
-        _root: &CommitmentRoot,
+        _root: Option<&CommitmentRoot>,
         _prefix: &CommitmentPrefix,
         _client_id: &ClientId,
         _proof: &CommitmentProofBytes,
