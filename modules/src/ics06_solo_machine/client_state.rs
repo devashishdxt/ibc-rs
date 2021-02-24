@@ -10,7 +10,9 @@ use super::{
 };
 use crate::{
     ics02_client::{
-        client_def::AnyClientState, client_type::ClientType, state::ClientState as IClientState,
+        client_def::AnyClientState,
+        client_type::ClientType,
+        state::{ClientState as IClientState, ConsensusState as _},
     },
     Height,
 };
@@ -53,6 +55,16 @@ impl IClientState for ClientState {
 
     fn is_frozen(&self) -> bool {
         self.frozen_sequence != 0
+    }
+
+    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
+        if self.sequence == 0 {
+            return Err(Kind::InvalidClientState
+                .context("sequence cannot be 0")
+                .into());
+        }
+
+        self.consensus_state.validate_basic()
     }
 
     fn wrap_any(self) -> AnyClientState {

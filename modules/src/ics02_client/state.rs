@@ -32,6 +32,9 @@ pub trait ClientState: Clone + std::fmt::Debug + Send + Sync {
     /// Freeze status of the client
     fn is_frozen(&self) -> bool;
 
+    /// Performs basic validation on client state
+    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>>;
+
     /// Wrap into an `AnyClientState`
     fn wrap_any(self) -> AnyClientState;
 }

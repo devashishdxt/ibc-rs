@@ -5,6 +5,9 @@ pub type Error = anomaly::Error<Kind>;
 
 #[derive(Clone, Debug, Error)]
 pub enum Kind {
+    #[error("invalid client state, failed basic validation")]
+    InvalidClientState,
+
     #[error("invalid consensus state, failed basic validation")]
     InvalidConsensusState,
 

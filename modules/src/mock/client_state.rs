@@ -83,6 +83,10 @@ impl ClientState for MockClientState {
         false
     }
 
+    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
+        todo!()
+    }
+
     fn wrap_any(self) -> AnyClientState {
         AnyClientState::Mock(self)
     }

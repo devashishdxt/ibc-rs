@@ -119,6 +119,10 @@ impl crate::ics02_client::state::ClientState for ClientState {
         !self.frozen_height.is_zero()
     }
 
+    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
+        todo!()
+    }
+
     fn wrap_any(self) -> AnyClientState {
         AnyClientState::Tendermint(self)
     }

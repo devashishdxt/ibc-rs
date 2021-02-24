@@ -305,6 +305,17 @@ impl ClientState for AnyClientState {
         }
     }
 
+    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
+        match self {
+            AnyClientState::Tendermint(tm_state) => tm_state.validate_basic(),
+
+            AnyClientState::SoloMachine(sm_state) => sm_state.validate_basic(),
+
+            #[cfg(any(test, feature = "mocks"))]
+            AnyClientState::Mock(mock_state) => mock_state.validate_basic(),
+        }
+    }
+
     fn wrap_any(self) -> AnyClientState {
         self
     }
