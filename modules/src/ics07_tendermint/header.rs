@@ -32,6 +32,10 @@ impl crate::ics02_client::header::Header for Header {
         )
     }
 
+    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
+        todo!()
+    }
+
     fn wrap_any(self) -> AnyHeader {
         AnyHeader::Tendermint(self)
     }

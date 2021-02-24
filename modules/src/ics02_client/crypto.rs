@@ -18,6 +18,15 @@ pub enum AnyPublicKey {
     Ed25519(Ed25519PubKey),
 }
 
+impl AnyPublicKey {
+    pub fn bytes(&self) -> &[u8] {
+        match self {
+            Self::Secp256k1(Secp256k1PubKey { ref key }) => key,
+            Self::Ed25519(Ed25519PubKey { ref key }) => key,
+        }
+    }
+}
+
 impl Protobuf<Any> for AnyPublicKey {}
 
 impl TryFrom<Any> for AnyPublicKey {

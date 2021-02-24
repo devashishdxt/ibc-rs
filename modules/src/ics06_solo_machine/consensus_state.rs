@@ -40,7 +40,25 @@ impl IConsensusState for ConsensusState {
     }
 
     fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
-        todo!("@devashishdxt")
+        if self.timestamp == 0 {
+            return Err(Kind::InvalidConsensusState
+                .context("timestamp cannot be 0")
+                .into());
+        }
+
+        if self.diversifier.trim().is_empty() {
+            return Err(Kind::InvalidConsensusState
+                .context("diversifier cannot contain only spaces")
+                .into());
+        }
+
+        if self.public_key.bytes().is_empty() {
+            return Err(Kind::InvalidConsensusState
+                .context("public key cannot be empty")
+                .into());
+        }
+
+        Ok(())
     }
 
     fn wrap_any(self) -> AnyConsensusState {

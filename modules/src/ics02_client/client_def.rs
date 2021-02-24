@@ -12,7 +12,10 @@ use crate::ics02_client::header::Header;
 use crate::ics02_client::state::{ClientState, ConsensusState};
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics04_channel::channel::ChannelEnd;
-use crate::ics06_solo_machine::consensus_state::ConsensusState as SoloMachineConsensusState;
+use crate::ics06_solo_machine::{
+    consensus_state::ConsensusState as SoloMachineConsensusState,
+    header::Header as SoloMachineHeader,
+};
 use crate::ics07_tendermint::client_def::TendermintClient;
 use crate::ics07_tendermint::client_state::ClientState as TendermintClientState;
 use crate::ics07_tendermint::consensus_state::ConsensusState as TendermintConsensusState;
@@ -35,6 +38,7 @@ pub const TENDERMINT_HEADER_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.He
 
 pub const SOLO_MACHINE_CONSENSUS_STATE_TYPE_URL: &str =
     "/ibc.lightclients.solomachine.v1.ConsensusState";
+pub const SOLO_MACHINE_HEADER_TYPE_URL: &str = "/ibc.lightclients.solomachine.v1.Header";
 
 pub const MOCK_CLIENT_STATE_TYPE_URL: &str = "/ibc.mock.ClientState";
 pub const MOCK_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.mock.ConsensusState";
@@ -114,6 +118,8 @@ pub trait ClientDef: Clone {
 pub enum AnyHeader {
     Tendermint(TendermintHeader),
 
+    SoloMachine(SoloMachineHeader),
+
     #[cfg(any(test, feature = "mocks"))]
     Mock(MockHeader),
 }
@@ -122,6 +128,8 @@ impl Header for AnyHeader {
     fn client_type(&self) -> ClientType {
         match self {
             Self::Tendermint(header) => header.client_type(),
+
+            Self::SoloMachine(header) => header.client_type(),
 
             #[cfg(any(test, feature = "mocks"))]
             Self::Mock(header) => header.client_type(),
@@ -132,8 +140,19 @@ impl Header for AnyHeader {
         match self {
             Self::Tendermint(header) => header.height(),
 
+            Self::SoloMachine(header) => header.height(),
+
             #[cfg(any(test, feature = "mocks"))]
             Self::Mock(header) => header.height(),
+        }
+    }
+
+    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
+        match self {
+            Self::Tendermint(ref header) => header.validate_basic(),
+            Self::SoloMachine(ref header) => header.validate_basic(),
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(ref header) => header.validate_basic(),
         }
     }
 
@@ -170,6 +189,10 @@ impl From<AnyHeader> for Any {
         match value {
             AnyHeader::Tendermint(header) => Any {
                 type_url: TENDERMINT_HEADER_TYPE_URL.to_string(),
+                value: header.encode_vec().unwrap(),
+            },
+            AnyHeader::SoloMachine(header) => Any {
+                type_url: SOLO_MACHINE_HEADER_TYPE_URL.to_string(),
                 value: header.encode_vec().unwrap(),
             },
             #[cfg(any(test, feature = "mocks"))]

@@ -19,6 +19,9 @@ pub enum Kind {
     #[error("invalid header, failed basic validation")]
     InvalidHeader,
 
+    #[error("invalid consensus state, failed basic validation")]
+    InvalidConsensusState,
+
     #[error("validation error")]
     ValidationError,
 
