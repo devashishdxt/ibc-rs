@@ -4,12 +4,15 @@ use ibc_proto::ibc::lightclients::solomachine::v1::Header as RawHeader;
 use serde::Serialize;
 use tendermint_proto::Protobuf;
 
+use super::{
+    error::{Error, Kind},
+    sign_bytes::SignBytes,
+};
 use crate::{
     ics02_client::{
         client_def::AnyHeader, client_type::ClientType, crypto::AnyPublicKey,
         header::Header as IHeader,
     },
-    ics07_tendermint::error::{Error, Kind},
     Height,
 };
 
@@ -37,6 +40,11 @@ impl Header {
             new_public_key,
             new_diversifier,
         }
+    }
+
+    pub fn get_sign_bytes(&self) -> Vec<u8> {
+        let sign_bytes: SignBytes = self.into();
+        sign_bytes.encode_vec().unwrap()
     }
 }
 
