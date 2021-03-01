@@ -1,15 +1,23 @@
+use ibc_proto::cosmos::tx::signing::v1beta1::signature_descriptor::{
+    data::Sum as SignatureData, Data as Signature,
+};
+use prost::Message;
+
 use super::{
     client_state::ClientState, consensus_state::ConsensusState, error::Kind, header::Header,
 };
 use crate::{
-    ics02_client::client_def::{AnyClientState, AnyConsensusState, ClientDef},
+    ics02_client::{
+        client_def::{AnyClientState, AnyConsensusState, ClientDef},
+        crypto::AnyPublicKey,
+    },
     ics04_channel::channel::ChannelEnd,
     ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot},
     ics24_host::identifier::{ChannelId, ClientId, PortId},
     Height,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SoloMachineClient;
 
 impl ClientDef for SoloMachineClient {
@@ -42,7 +50,16 @@ impl ClientDef for SoloMachineClient {
                 .into());
         }
 
-        // TODO: @devashishdxt Signature verification
+        let header_sign_bytes = header.get_sign_bytes();
+        let signature_data = Signature::decode(header.signature.as_ref())
+            .map_err(|e| Kind::InvalidSignatureData.context(e))?
+            .sum
+            .ok_or_else(|| Kind::InvalidHeader.context("missing signature data"))?;
+        let public_key = client_state.consensus_state.public_key;
+
+        if !verify_signature(&public_key, &header_sign_bytes, &signature_data) {
+            return Err(Kind::InvalidHeader.context("invalid signature").into());
+        }
 
         client_state.consensus_state.public_key = header.new_public_key;
         client_state.consensus_state.diversifier = header.new_diversifier;
@@ -104,4 +121,12 @@ impl ClientDef for SoloMachineClient {
     ) -> Result<(), Box<dyn std::error::Error>> {
         todo!("@devashishdxt")
     }
+}
+
+pub fn verify_signature(
+    _public_key: &AnyPublicKey,
+    _msg: &[u8],
+    _signature: &SignatureData,
+) -> bool {
+    todo!("@devashishdxt")
 }

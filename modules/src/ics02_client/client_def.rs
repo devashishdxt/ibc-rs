@@ -13,7 +13,7 @@ use crate::ics02_client::state::{ClientState, ConsensusState};
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics04_channel::channel::ChannelEnd;
 use crate::ics06_solo_machine::{
-    client_state::ClientState as SoloMachineClientState,
+    client_def::SoloMachineClient, client_state::ClientState as SoloMachineClientState,
     consensus_state::ConsensusState as SoloMachineConsensusState,
     header::Header as SoloMachineHeader,
 };
@@ -428,6 +428,8 @@ impl ConsensusState for AnyConsensusState {
 pub enum AnyClient {
     Tendermint(TendermintClient),
 
+    SoloMachine(SoloMachineClient),
+
     #[cfg(any(test, feature = "mocks"))]
     Mock(MockClient),
 }
@@ -474,6 +476,19 @@ impl ClientDef for AnyClient {
                 ))
             }
 
+            Self::SoloMachine(client) => {
+                let (client_state, header) = downcast!(
+                    client_state => AnyClientState::SoloMachine,
+                    header => AnyHeader::SoloMachine
+                )
+                .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::SoloMachine))?;
+
+                let (new_state, new_consensus) =
+                    client.check_header_and_update_state(client_state, header)?;
+
+                Ok((new_state.wrap_any(), new_consensus.wrap_any()))
+            }
+
             #[cfg(any(test, feature = "mocks"))]
             Self::Mock(client) => {
                 let (client_state, header) = downcast!(
@@ -509,6 +524,23 @@ impl ClientDef for AnyClient {
                     client_state => AnyClientState::Tendermint
                 )
                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
+
+                client.verify_client_consensus_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    client_id,
+                    consensus_height,
+                    expected_consensus_state,
+                )
+            }
+
+            Self::SoloMachine(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::SoloMachine
+                )
+                .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::SoloMachine))?;
 
                 client.verify_client_consensus_state(
                     client_state,
@@ -565,6 +597,20 @@ impl ClientDef for AnyClient {
                 )
             }
 
+            Self::SoloMachine(client) => {
+                let client_state = downcast!(client_state => AnyClientState::SoloMachine)
+                    .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::SoloMachine))?;
+
+                client.verify_connection_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    connection_id,
+                    expected_connection_end,
+                )
+            }
+
             #[cfg(any(test, feature = "mocks"))]
             Self::Mock(client) => {
                 let client_state = downcast!(client_state => AnyClientState::Mock)
@@ -596,6 +642,21 @@ impl ClientDef for AnyClient {
             Self::Tendermint(client) => {
                 let client_state = downcast!(client_state => AnyClientState::Tendermint)
                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
+
+                client.verify_channel_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    port_id,
+                    channel_id,
+                    expected_channel_end,
+                )
+            }
+
+            Self::SoloMachine(client) => {
+                let client_state = downcast!(client_state => AnyClientState::SoloMachine)
+                    .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::SoloMachine))?;
 
                 client.verify_channel_state(
                     client_state,
@@ -642,6 +703,23 @@ impl ClientDef for AnyClient {
                     client_state => AnyClientState::Tendermint
                 )
                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
+
+                client.verify_client_full_state(
+                    client_state,
+                    height,
+                    root,
+                    prefix,
+                    client_id,
+                    proof,
+                    client_state_on_counterparty,
+                )
+            }
+
+            Self::SoloMachine(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::SoloMachine
+                )
+                .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::SoloMachine))?;
 
                 client.verify_client_full_state(
                     client_state,

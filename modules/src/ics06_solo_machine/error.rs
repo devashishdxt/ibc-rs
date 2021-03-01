@@ -25,6 +25,9 @@ pub enum Kind {
 
     #[error("invalid raw header data")]
     InvalidRawHeaderData,
+
+    #[error("invalid signature data")]
+    InvalidSignatureData,
 }
 
 impl Kind {

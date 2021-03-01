@@ -52,7 +52,7 @@ impl IConsensusState for ConsensusState {
                 .into());
         }
 
-        if self.public_key.bytes().is_empty() {
+        if self.public_key.is_empty() {
             return Err(Kind::InvalidConsensusState
                 .context("public key cannot be empty")
                 .into());

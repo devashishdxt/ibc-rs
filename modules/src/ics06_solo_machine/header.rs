@@ -79,7 +79,7 @@ impl IHeader for Header {
                 .into());
         }
 
-        if self.new_public_key.bytes().is_empty() {
+        if self.new_public_key.is_empty() {
             return Err(Kind::InvalidHeader
                 .context("new public key cannot be empty")
                 .into());

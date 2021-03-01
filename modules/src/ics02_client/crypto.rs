@@ -1,7 +1,8 @@
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 
 use ibc_proto::cosmos::crypto::{
-    ed25519::PubKey as RawEd25519PubKey, secp256k1::PubKey as RawSecp256k1PubKey,
+    ed25519::PubKey as RawEd25519PubKey, multisig::LegacyAminoPubKey as RawMultisigPubKey,
+    secp256k1::PubKey as RawSecp256k1PubKey,
 };
 use prost_types::Any;
 use serde::Serialize;
@@ -11,18 +12,21 @@ use crate::ics02_client::error::{Error, Kind};
 
 pub const SECP256K1_PUB_KEY_TYPE_URL: &str = "/cosmos.crypto.secp256k1.PubKey";
 pub const ED25519_PUB_KEY_TYPE_URL: &str = "/cosmos.crypto.ed25519.PubKey";
+pub const MULTISIG_PUB_KEY_TYPE_URL: &str = "/cosmos.crypto.multisig.LegacyAminoPubKey";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum AnyPublicKey {
     Secp256k1(Secp256k1PubKey),
     Ed25519(Ed25519PubKey),
+    Multisig(MultisigPubKey),
 }
 
 impl AnyPublicKey {
-    pub fn bytes(&self) -> &[u8] {
+    pub fn is_empty(&self) -> bool {
         match self {
-            Self::Secp256k1(Secp256k1PubKey { ref key }) => key,
-            Self::Ed25519(Ed25519PubKey { ref key }) => key,
+            Self::Secp256k1(Secp256k1PubKey { ref key }) => key.is_empty(),
+            Self::Ed25519(Ed25519PubKey { ref key }) => key.is_empty(),
+            Self::Multisig(key) => key.encode_vec().unwrap().is_empty(), // TODO: optimize
         }
     }
 }
@@ -56,6 +60,10 @@ impl From<AnyPublicKey> for Any {
             },
             AnyPublicKey::Ed25519(key) => Any {
                 type_url: ED25519_PUB_KEY_TYPE_URL.to_string(),
+                value: key.encode_vec().unwrap(),
+            },
+            AnyPublicKey::Multisig(key) => Any {
+                type_url: MULTISIG_PUB_KEY_TYPE_URL.to_string(),
                 value: key.encode_vec().unwrap(),
             },
         }
@@ -97,5 +105,37 @@ impl From<RawEd25519PubKey> for Ed25519PubKey {
 impl From<Ed25519PubKey> for RawEd25519PubKey {
     fn from(value: Ed25519PubKey) -> Self {
         Self { key: value.key }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MultisigPubKey {
+    pub threshold: u32,
+    pub public_keys: Vec<AnyPublicKey>,
+}
+
+impl Protobuf<RawMultisigPubKey> for MultisigPubKey {}
+
+impl TryFrom<RawMultisigPubKey> for MultisigPubKey {
+    type Error = Error;
+
+    fn try_from(value: RawMultisigPubKey) -> Result<Self, Self::Error> {
+        Ok(Self {
+            threshold: value.threshold,
+            public_keys: value
+                .public_keys
+                .into_iter()
+                .map(TryInto::try_into)
+                .collect::<Result<Vec<AnyPublicKey>, Error>>()?,
+        })
+    }
+}
+
+impl From<MultisigPubKey> for RawMultisigPubKey {
+    fn from(value: MultisigPubKey) -> Self {
+        Self {
+            threshold: value.threshold,
+            public_keys: value.public_keys.into_iter().map(Into::into).collect(),
+        }
     }
 }
