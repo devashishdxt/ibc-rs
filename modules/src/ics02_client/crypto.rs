@@ -75,6 +75,12 @@ pub struct Secp256k1PubKey {
     key: Vec<u8>,
 }
 
+impl AsRef<[u8]> for Secp256k1PubKey {
+    fn as_ref(&self) -> &[u8] {
+        &self.key
+    }
+}
+
 impl Protobuf<RawSecp256k1PubKey> for Secp256k1PubKey {}
 
 impl From<RawSecp256k1PubKey> for Secp256k1PubKey {

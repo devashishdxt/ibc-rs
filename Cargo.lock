@@ -993,6 +993,7 @@ dependencies = [
  "chrono",
  "dyn-clonable",
  "ibc-proto",
+ "k256",
  "prost",
  "prost-types",
  "regex",

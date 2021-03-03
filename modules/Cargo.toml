@@ -1,14 +1,12 @@
 [package]
-name       = "ibc"
-version    = "0.1.1"
-edition    = "2018"
-license    = "Apache-2.0"
-readme     = "README.md"
-keywords   = ["blockchain", "consensus", "cosmos", "ibc", "tendermint"]
+name = "ibc"
+version = "0.1.1"
+edition = "2018"
+license = "Apache-2.0"
+readme = "README.md"
+keywords = ["blockchain", "consensus", "cosmos", "ibc", "tendermint"]
 repository = "https://github.com/informalsystems/ibc-rs"
-authors    = [
-  "Informal Systems <hello@informal.systems>"
-]
+authors = ["Informal Systems <hello@informal.systems>"]
 
 description = """
     Implementation of the Inter-Blockchain Communication Protocol (IBC).
@@ -18,7 +16,7 @@ description = """
 [features]
 # This feature grants access to development-time mocking libraries, such as `MockContext` or `MockHeader`.
 # Depends on the `testgen` suite for generating Tendermint light blocks.
-mocks = [ "tendermint-testgen", "sha2" ]
+mocks = ["tendermint-testgen", "sha2"]
 
 [dependencies]
 # Proto definitions for all IBC-related interfaces, e.g., connections or channels.
@@ -38,6 +36,7 @@ regex = "1"
 bech32 = "0.8.0"
 subtle-encoding = "0.5"
 sha2 = { version = "0.9.3", optional = true }
+k256 = { version = "0.7", features = ["ecdsa", "sha256"] }
 
 [dependencies.tendermint]
 version = "=0.18.1"

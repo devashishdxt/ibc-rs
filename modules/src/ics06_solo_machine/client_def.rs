@@ -1,15 +1,22 @@
+use std::convert::TryFrom;
+
 use ibc_proto::cosmos::tx::signing::v1beta1::signature_descriptor::{
-    data::Sum as SignatureData, Data as Signature,
+    data::{Multi, Single, Sum as SignatureData},
+    Data,
 };
+use k256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
 use prost::Message;
 
 use super::{
-    client_state::ClientState, consensus_state::ConsensusState, error::Kind, header::Header,
+    client_state::ClientState,
+    consensus_state::ConsensusState,
+    error::{Error, Kind},
+    header::Header,
 };
 use crate::{
     ics02_client::{
         client_def::{AnyClientState, AnyConsensusState, ClientDef},
-        crypto::AnyPublicKey,
+        crypto::{AnyPublicKey, Ed25519PubKey, MultisigPubKey, Secp256k1PubKey},
     },
     ics04_channel::channel::ChannelEnd,
     ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot},
@@ -51,15 +58,13 @@ impl ClientDef for SoloMachineClient {
         }
 
         let header_sign_bytes = header.get_sign_bytes();
-        let signature_data = Signature::decode(header.signature.as_ref())
+        let signature_data = Data::decode(header.signature.as_ref())
             .map_err(|e| Kind::InvalidSignatureData.context(e))?
             .sum
             .ok_or_else(|| Kind::InvalidHeader.context("missing signature data"))?;
         let public_key = client_state.consensus_state.public_key;
 
-        if !verify_signature(&public_key, &header_sign_bytes, &signature_data) {
-            return Err(Kind::InvalidHeader.context("invalid signature").into());
-        }
+        verify_signature(&public_key, &header_sign_bytes, &signature_data)?;
 
         client_state.consensus_state.public_key = header.new_public_key;
         client_state.consensus_state.diversifier = header.new_diversifier;
@@ -123,10 +128,55 @@ impl ClientDef for SoloMachineClient {
     }
 }
 
-pub fn verify_signature(
-    _public_key: &AnyPublicKey,
+fn verify_signature(
+    public_key: &AnyPublicKey,
+    msg: &[u8],
+    signature: &SignatureData,
+) -> Result<(), Error> {
+    match (public_key, signature) {
+        (AnyPublicKey::Secp256k1(ref public_key), SignatureData::Single(ref signature_data)) => {
+            verify_secp256k1_signature(public_key, msg, signature_data)
+        }
+        (AnyPublicKey::Ed25519(ref public_key), SignatureData::Single(ref signature_data)) => {
+            verify_ed25519_signature(public_key, msg, signature_data)
+        }
+        (AnyPublicKey::Multisig(ref public_key), SignatureData::Multi(ref signature_data)) => {
+            verify_multi_signature(public_key, msg, signature_data)
+        }
+        _ => Err(Kind::InvalidHeader.context("invalid signature type").into()),
+    }
+}
+
+fn verify_secp256k1_signature(
+    public_key: &Secp256k1PubKey,
+    msg: &[u8],
+    signature_data: &Single,
+) -> Result<(), Error> {
+    let verify_key = VerifyingKey::from_sec1_bytes(public_key.as_ref())
+        .map_err(|e| Kind::InvalidPubKey.context(e))?;
+
+    let signature = Signature::try_from(signature_data.signature.as_ref())
+        .map_err(|e| Kind::InvalidSignatureData.context(e))?;
+
+    verify_key
+        .verify(msg, &signature)
+        .map_err(|e| Kind::SignatureVerificationFailed.context(e))?;
+
+    Ok(())
+}
+
+fn verify_ed25519_signature(
+    _public_key: &Ed25519PubKey,
     _msg: &[u8],
-    _signature: &SignatureData,
-) -> bool {
+    _signature_data: &Single,
+) -> Result<(), Error> {
+    todo!("@devashishdxt")
+}
+
+fn verify_multi_signature(
+    _public_key: &MultisigPubKey,
+    _msg: &[u8],
+    _signature_data: &Multi,
+) -> Result<(), Error> {
     todo!("@devashishdxt")
 }

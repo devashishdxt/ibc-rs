@@ -439,7 +439,7 @@ impl AnyClient {
         match client_type {
             ClientType::Tendermint => Self::Tendermint(TendermintClient),
 
-            ClientType::SoloMachine => todo!("@devashishdxt"),
+            ClientType::SoloMachine => Self::SoloMachine(SoloMachineClient),
 
             #[cfg(any(test, feature = "mocks"))]
             ClientType::Mock => Self::Mock(MockClient),
