@@ -1,10 +1,11 @@
 use std::convert::TryFrom;
 
+use ed25519_dalek::Verifier as Ed25519Verifier;
 use ibc_proto::cosmos::tx::signing::v1beta1::signature_descriptor::{
     data::{Multi, Single, Sum as SignatureData},
-    Data,
+    Data as Signature,
 };
-use k256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
+use k256::ecdsa::signature::Verifier as EcdsaVerifier;
 use prost::Message;
 
 use super::{
@@ -58,7 +59,7 @@ impl ClientDef for SoloMachineClient {
         }
 
         let header_sign_bytes = header.get_sign_bytes();
-        let signature_data = Data::decode(header.signature.as_ref())
+        let signature_data = Signature::decode(header.signature.as_ref())
             .map_err(|e| Kind::InvalidSignatureData.context(e))?
             .sum
             .ok_or_else(|| Kind::InvalidHeader.context("missing signature data"))?;
@@ -152,25 +153,34 @@ fn verify_secp256k1_signature(
     msg: &[u8],
     signature_data: &Single,
 ) -> Result<(), Error> {
-    let verify_key = VerifyingKey::from_sec1_bytes(public_key.as_ref())
+    let verify_key = k256::ecdsa::VerifyingKey::from_sec1_bytes(public_key.as_ref())
         .map_err(|e| Kind::InvalidPubKey.context(e))?;
 
-    let signature = Signature::try_from(signature_data.signature.as_ref())
+    let signature = k256::ecdsa::Signature::try_from(signature_data.signature.as_ref())
         .map_err(|e| Kind::InvalidSignatureData.context(e))?;
 
-    verify_key
-        .verify(msg, &signature)
-        .map_err(|e| Kind::SignatureVerificationFailed.context(e))?;
-
-    Ok(())
+    EcdsaVerifier::verify(&verify_key, msg, &signature)
+        .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
 }
 
 fn verify_ed25519_signature(
-    _public_key: &Ed25519PubKey,
-    _msg: &[u8],
-    _signature_data: &Single,
+    public_key: &Ed25519PubKey,
+    msg: &[u8],
+    signature_data: &Single,
 ) -> Result<(), Error> {
-    todo!("@devashishdxt")
+    if signature_data.signature.len() != 64 {
+        return Err(Kind::InvalidSignatureData.into());
+    }
+
+    let mut signature = [0; 64];
+    signature.copy_from_slice(&signature_data.signature);
+
+    let signature = ed25519_dalek::Signature::new(signature);
+    let public_key = ed25519_dalek::PublicKey::from_bytes(public_key.as_ref())
+        .map_err(|e| Kind::InvalidPubKey.context(e))?;
+
+    Ed25519Verifier::verify(&public_key, msg, &signature)
+        .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
 }
 
 fn verify_multi_signature(

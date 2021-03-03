@@ -100,6 +100,12 @@ pub struct Ed25519PubKey {
     key: Vec<u8>,
 }
 
+impl AsRef<[u8]> for Ed25519PubKey {
+    fn as_ref(&self) -> &[u8] {
+        &self.key
+    }
+}
+
 impl Protobuf<RawEd25519PubKey> for Ed25519PubKey {}
 
 impl From<RawEd25519PubKey> for Ed25519PubKey {

@@ -992,6 +992,7 @@ dependencies = [
  "bytes",
  "chrono",
  "dyn-clonable",
+ "ed25519-dalek",
  "ibc-proto",
  "k256",
  "prost",
