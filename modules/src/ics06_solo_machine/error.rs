@@ -14,9 +14,6 @@ pub enum Kind {
     #[error("invalid header, failed basic validation")]
     InvalidHeader,
 
-    #[error("invalid public key")]
-    InvalidPubKey,
-
     #[error("invalid raw client state")]
     InvalidRawClientState,
 

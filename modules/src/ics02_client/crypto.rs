@@ -75,6 +75,19 @@ pub struct Secp256k1PubKey {
     key: Vec<u8>,
 }
 
+impl Secp256k1PubKey {
+    pub fn verify_signature(&self, msg: &[u8], signature: &[u8]) -> Result<(), Error> {
+        let verify_key = k256::ecdsa::VerifyingKey::from_sec1_bytes(self.key.as_ref())
+            .map_err(|e| Kind::InvalidPubKey.context(e))?;
+
+        let signature = k256::ecdsa::Signature::try_from(signature)
+            .map_err(|e| Kind::InvalidSignatureData.context(e))?;
+
+        k256::ecdsa::signature::Verifier::verify(&verify_key, msg, &signature)
+            .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
+    }
+}
+
 impl AsRef<[u8]> for Secp256k1PubKey {
     fn as_ref(&self) -> &[u8] {
         &self.key
@@ -98,6 +111,24 @@ impl From<Secp256k1PubKey> for RawSecp256k1PubKey {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Ed25519PubKey {
     key: Vec<u8>,
+}
+
+impl Ed25519PubKey {
+    pub fn verify_signature(&self, msg: &[u8], signature: &[u8]) -> Result<(), Error> {
+        if signature.len() != 64 {
+            return Err(Kind::InvalidSignatureData.into());
+        }
+
+        let mut sig = [0; 64];
+        sig.copy_from_slice(&signature);
+
+        let signature = ed25519_dalek::Signature::new(sig);
+        let public_key = ed25519_dalek::PublicKey::from_bytes(self.key.as_ref())
+            .map_err(|e| Kind::InvalidPubKey.context(e))?;
+
+        ed25519_dalek::Verifier::verify(&public_key, msg, &signature)
+            .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
+    }
 }
 
 impl AsRef<[u8]> for Ed25519PubKey {

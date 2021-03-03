@@ -80,6 +80,15 @@ pub enum Kind {
 
     #[error("invalid raw pub key")]
     InvalidRawPubKey,
+
+    #[error("invalid public key")]
+    InvalidPubKey,
+
+    #[error("invalid signature data")]
+    InvalidSignatureData,
+
+    #[error("signature verification failed")]
+    SignatureVerificationFailed,
 }
 
 impl Kind {

@@ -1,11 +1,7 @@
-use std::convert::TryFrom;
-
-use ed25519_dalek::Verifier as Ed25519Verifier;
 use ibc_proto::cosmos::tx::signing::v1beta1::signature_descriptor::{
-    data::{Multi, Single, Sum as SignatureData},
+    data::{Multi, Sum as SignatureData},
     Data as Signature,
 };
-use k256::ecdsa::signature::Verifier as EcdsaVerifier;
 use prost::Message;
 
 use super::{
@@ -17,7 +13,7 @@ use super::{
 use crate::{
     ics02_client::{
         client_def::{AnyClientState, AnyConsensusState, ClientDef},
-        crypto::{AnyPublicKey, Ed25519PubKey, MultisigPubKey, Secp256k1PubKey},
+        crypto::{AnyPublicKey, MultisigPubKey},
     },
     ics04_channel::channel::ChannelEnd,
     ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot},
@@ -136,10 +132,14 @@ fn verify_signature(
 ) -> Result<(), Error> {
     match (public_key, signature) {
         (AnyPublicKey::Secp256k1(ref public_key), SignatureData::Single(ref signature_data)) => {
-            verify_secp256k1_signature(public_key, msg, signature_data)
+            public_key
+                .verify_signature(msg, &signature_data.signature)
+                .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
         }
         (AnyPublicKey::Ed25519(ref public_key), SignatureData::Single(ref signature_data)) => {
-            verify_ed25519_signature(public_key, msg, signature_data)
+            public_key
+                .verify_signature(msg, signature_data.signature.as_ref())
+                .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
         }
         (AnyPublicKey::Multisig(ref public_key), SignatureData::Multi(ref signature_data)) => {
             verify_multi_signature(public_key, msg, signature_data)
@@ -147,42 +147,6 @@ fn verify_signature(
         _ => Err(Kind::InvalidHeader.context("invalid signature type").into()),
     }
 }
-
-fn verify_secp256k1_signature(
-    public_key: &Secp256k1PubKey,
-    msg: &[u8],
-    signature_data: &Single,
-) -> Result<(), Error> {
-    let verify_key = k256::ecdsa::VerifyingKey::from_sec1_bytes(public_key.as_ref())
-        .map_err(|e| Kind::InvalidPubKey.context(e))?;
-
-    let signature = k256::ecdsa::Signature::try_from(signature_data.signature.as_ref())
-        .map_err(|e| Kind::InvalidSignatureData.context(e))?;
-
-    EcdsaVerifier::verify(&verify_key, msg, &signature)
-        .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
-}
-
-fn verify_ed25519_signature(
-    public_key: &Ed25519PubKey,
-    msg: &[u8],
-    signature_data: &Single,
-) -> Result<(), Error> {
-    if signature_data.signature.len() != 64 {
-        return Err(Kind::InvalidSignatureData.into());
-    }
-
-    let mut signature = [0; 64];
-    signature.copy_from_slice(&signature_data.signature);
-
-    let signature = ed25519_dalek::Signature::new(signature);
-    let public_key = ed25519_dalek::PublicKey::from_bytes(public_key.as_ref())
-        .map_err(|e| Kind::InvalidPubKey.context(e))?;
-
-    Ed25519Verifier::verify(&public_key, msg, &signature)
-        .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
-}
-
 fn verify_multi_signature(
     _public_key: &MultisigPubKey,
     _msg: &[u8],
