@@ -1,6 +1,5 @@
 use ibc_proto::cosmos::tx::signing::v1beta1::signature_descriptor::{
-    data::{Multi, Sum as SignatureData},
-    Data as Signature,
+    data::Sum as SignatureData, Data as Signature,
 };
 use prost::Message;
 
@@ -13,7 +12,7 @@ use super::{
 use crate::{
     ics02_client::{
         client_def::{AnyClientState, AnyConsensusState, ClientDef},
-        crypto::{AnyPublicKey, MultisigPubKey},
+        crypto::AnyPublicKey,
     },
     ics04_channel::channel::ChannelEnd,
     ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot},
@@ -142,15 +141,10 @@ fn verify_signature(
                 .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
         }
         (AnyPublicKey::Multisig(ref public_key), SignatureData::Multi(ref signature_data)) => {
-            verify_multi_signature(public_key, msg, signature_data)
+            public_key
+                .verify_multi_signature(msg, signature_data)
+                .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
         }
         _ => Err(Kind::InvalidHeader.context("invalid signature type").into()),
     }
-}
-fn verify_multi_signature(
-    _public_key: &MultisigPubKey,
-    _msg: &[u8],
-    _signature_data: &Multi,
-) -> Result<(), Error> {
-    todo!("@devashishdxt")
 }
