@@ -293,9 +293,9 @@ trait BitArray {
 
 impl BitArray for CompactBitArray {
     fn new(num_bits: usize) -> Self {
-        let extra_bits_stored = num_bits % 8;
+        let extra_bits_stored = num_bits & 7; // equivalent to `num_bits % 8`
 
-        let mut elem_size = num_bits / 8;
+        let mut elem_size = num_bits >> 3; // equivalent to `num_bits / 8`
 
         if extra_bits_stored > 0 {
             elem_size += 1;
@@ -320,10 +320,7 @@ impl BitArray for CompactBitArray {
             return false;
         }
 
-        let elems_index = index / 8;
-        let elems_bit = index % 8;
-
-        return (self.elems[elems_index] & (MASK >> elems_bit)) > 0;
+        return (self.elems[index >> 3] & (MASK >> (index & 7))) > 0; // equivalent to `(self.elems[index / 8] & (MASK >> (index % 8)))`
     }
 
     fn set(&mut self, index: usize, value: bool) -> bool {
@@ -331,13 +328,10 @@ impl BitArray for CompactBitArray {
             return false;
         }
 
-        let elems_index = index / 8;
-        let elems_bit = index % 8;
-
         if value {
-            self.elems[elems_index] |= MASK >> elems_bit;
+            self.elems[index >> 3] |= MASK >> (index & 7); // equivalent to `self.elems[index / 8] |= MASK >> (index % 8)`
         } else {
-            self.elems[elems_index] &= !(MASK >> elems_bit);
+            self.elems[index >> 3] &= !(MASK >> (index & 7)); // equivalent to `self.elems[index / 8] &= !(MASK >> (index % 8))`
         }
 
         return true;
