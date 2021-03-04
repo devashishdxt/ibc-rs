@@ -1,18 +1,13 @@
-use ibc_proto::cosmos::tx::signing::v1beta1::signature_descriptor::{
-    data::Sum as SignatureData, Data as Signature,
-};
+use ibc_proto::cosmos::tx::signing::v1beta1::signature_descriptor::Data as Signature;
 use prost::Message;
 
 use super::{
-    client_state::ClientState,
-    consensus_state::ConsensusState,
-    error::{Error, Kind},
-    header::Header,
+    client_state::ClientState, consensus_state::ConsensusState, error::Kind, header::Header,
 };
 use crate::{
     ics02_client::{
         client_def::{AnyClientState, AnyConsensusState, ClientDef},
-        crypto::AnyPublicKey,
+        crypto::verify_signature,
     },
     ics04_channel::channel::ChannelEnd,
     ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot},
@@ -121,30 +116,5 @@ impl ClientDef for SoloMachineClient {
         _counterparty_client_state: &AnyClientState,
     ) -> Result<(), Box<dyn std::error::Error>> {
         todo!("@devashishdxt")
-    }
-}
-
-fn verify_signature(
-    public_key: &AnyPublicKey,
-    msg: &[u8],
-    signature: &SignatureData,
-) -> Result<(), Error> {
-    match (public_key, signature) {
-        (AnyPublicKey::Secp256k1(ref public_key), SignatureData::Single(ref signature_data)) => {
-            public_key
-                .verify_signature(msg, &signature_data.signature)
-                .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
-        }
-        (AnyPublicKey::Ed25519(ref public_key), SignatureData::Single(ref signature_data)) => {
-            public_key
-                .verify_signature(msg, signature_data.signature.as_ref())
-                .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
-        }
-        (AnyPublicKey::Multisig(ref public_key), SignatureData::Multi(ref signature_data)) => {
-            public_key
-                .verify_multi_signature(msg, signature_data)
-                .map_err(|e| Kind::SignatureVerificationFailed.context(e).into())
-        }
-        _ => Err(Kind::InvalidHeader.context("invalid signature type").into()),
     }
 }
