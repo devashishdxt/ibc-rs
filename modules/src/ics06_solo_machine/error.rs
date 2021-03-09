@@ -14,6 +14,9 @@ pub enum Kind {
     #[error("invalid header, failed basic validation")]
     InvalidHeader,
 
+    #[error("invalid misbehaviour")]
+    InvalidMisbehaviour,
+
     #[error("invalid raw client state")]
     InvalidRawClientState,
 
@@ -25,6 +28,12 @@ pub enum Kind {
 
     #[error("invalid raw header data")]
     InvalidRawHeaderData,
+
+    #[error("invalid raw misbehaviour")]
+    InvalidRawMisbehaviour,
+
+    #[error("invalid signature and data")]
+    InvalidSignatureAndData,
 
     #[error("invalid signature data")]
     InvalidSignatureData,
