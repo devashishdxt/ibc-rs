@@ -286,6 +286,17 @@ impl From<AnyClientState> for Any {
 }
 
 impl ClientState for AnyClientState {
+    fn chain_id(&self) -> crate::ics24_host::identifier::ChainId {
+        match self {
+            AnyClientState::Tendermint(tm_state) => tm_state.chain_id(),
+
+            AnyClientState::SoloMachine(sm_state) => sm_state.chain_id(),
+
+            #[cfg(any(test, feature = "mocks"))]
+            AnyClientState::Mock(mock_state) => mock_state.chain_id(),
+        }
+    }
+
     fn client_type(&self) -> ClientType {
         self.client_type()
     }

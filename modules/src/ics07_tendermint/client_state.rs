@@ -106,6 +106,10 @@ impl ClientState {
 }
 
 impl crate::ics02_client::state::ClientState for ClientState {
+    fn chain_id(&self) -> ChainId {
+        self.chain_id.clone()
+    }
+
     fn client_type(&self) -> ClientType {
         ClientType::Tendermint
     }

@@ -14,6 +14,7 @@ use crate::{
         client_type::ClientType,
         state::{ClientState as IClientState, ConsensusState as _},
     },
+    ics24_host::identifier::ChainId,
     Height,
 };
 
@@ -42,6 +43,10 @@ impl ClientState {
 }
 
 impl IClientState for ClientState {
+    fn chain_id(&self) -> ChainId {
+        todo!("@devashishdxt")
+    }
+
     fn client_type(&self) -> ClientType {
         ClientType::SoloMachine
     }
