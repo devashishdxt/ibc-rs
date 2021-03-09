@@ -9,9 +9,10 @@ use crate::{
         client_def::{AnyClientState, AnyConsensusState, ClientDef},
         crypto::verify_signature,
     },
+    ics03_connection::connection::ConnectionEnd,
     ics04_channel::channel::ChannelEnd,
     ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot},
-    ics24_host::identifier::{ChannelId, ClientId, PortId},
+    ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
     Height,
 };
 
@@ -86,8 +87,8 @@ impl ClientDef for SoloMachineClient {
         _height: Height,
         _prefix: &CommitmentPrefix,
         _proof: &CommitmentProofBytes,
-        _connection_id: &crate::ics24_host::identifier::ConnectionId,
-        _expected_connection_end: &crate::ics03_connection::connection::ConnectionEnd,
+        _connection_id: &ConnectionId,
+        _expected_connection_end: &ConnectionEnd,
     ) -> Result<(), Box<dyn std::error::Error>> {
         todo!("@devashishdxt")
     }
